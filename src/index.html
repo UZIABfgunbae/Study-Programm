@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Focus</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span data-i18n="app.name">Study Focus</span>
+      </div>
+
+      <nav class="tabs" id="tabs">
+        <button class="tab is-active" data-view="focus" data-i18n="tab.focus">Fokus</button>
+        <button class="tab" data-view="tasks" data-i18n="tab.tasks">Aufgaben</button>
+        <button class="tab" data-view="goals" data-i18n="tab.goals">Ziele</button>
+        <button class="tab" data-view="stats" data-i18n="tab.stats">Statistik</button>
+        <button class="tab" data-view="settings" data-i18n="tab.settings">Einstellungen</button>
+      </nav>
+
+      <div class="topbar-right">
+        <span class="mini-stat" id="topbarToday"></span>
+        <button class="icon-btn" id="themeToggle" data-i18n-title="topbar.themeToggle">◐</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ---------------------------------------------------------- FOKUS -->
+      <section class="view is-active" data-view="focus">
+        <div class="focus-grid">
+          <div class="card timer-card">
+            <div class="mode-switch" id="modeSwitch">
+              <button class="mode-btn is-active" data-mode="countdown" data-i18n="timer.countdown">Countdown</button>
+              <button class="mode-btn" data-mode="stopwatch" data-i18n="timer.stopwatch">Stoppuhr</button>
+            </div>
+
+            <div class="timer-ring-wrap">
+              <svg class="timer-ring" viewBox="0 0 240 240" aria-hidden="true">
+                <circle class="ring-track" cx="120" cy="120" r="104"></circle>
+                <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="104"></circle>
+              </svg>
+              <div class="timer-center">
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="timer-sub" id="timerSub"></div>
+              </div>
+            </div>
+
+            <div class="time-inputs" id="timeInputs">
+              <label><span data-i18n="timer.hours">Std</span><input type="number" id="inpHours" min="0" max="23" value="0" /></label>
+              <label><span data-i18n="timer.minutes">Min</span><input type="number" id="inpMinutes" min="0" max="59" value="25" /></label>
+              <label><span data-i18n="timer.seconds">Sek</span><input type="number" id="inpSeconds" min="0" max="59" value="0" /></label>
+            </div>
+
+            <div class="presets" id="presets"></div>
+
+            <div class="timer-controls">
+              <button class="btn btn-primary" id="btnStartPause" data-i18n="timer.start">Start</button>
+              <button class="btn" id="btnReset" data-i18n="timer.reset">Reset</button>
+              <button class="btn" id="btnFinish" data-i18n="timer.finish" hidden>Beenden &amp; speichern</button>
+            </div>
+            <p class="hint" data-i18n="timer.shortcuts">Leertaste = Start/Pause · R = Reset</p>
+          </div>
+
+          <div class="focus-side">
+            <div class="card">
+              <h2 class="card-title" data-i18n="focus.currentTask">Aktuelle Aufgabe</h2>
+              <div id="currentTaskBox" class="current-task empty"></div>
+              <div class="row-actions" id="currentTaskActions" hidden>
+                <button class="btn btn-small" id="btnTaskDone" data-i18n="focus.taskDone">Aufgabe erledigt</button>
+                <button class="btn btn-small btn-ghost" id="btnTaskClear" data-i18n="focus.taskClear">Lösen</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2 class="card-title" data-i18n="focus.sound">Fokus-Sound</h2>
+              <div class="noise-row">
+                <label class="switch">
+                  <input type="checkbox" id="noiseToggle" />
+                  <span class="slider"></span>
+                </label>
+                <span class="noise-label" data-i18n="focus.brownNoise">Brown Noise</span>
+              </div>
+              <label class="range-row">
+                <span data-i18n="focus.volume">Lautstärke</span>
+                <input type="range" id="noiseVolume" min="0" max="100" value="40" />
+                <span class="range-value" id="noiseVolumeValue">40 %</span>
+              </label>
+              <p class="hint" data-i18n="focus.soundHint">Läuft unabhängig vom Timer-Signal weiter.</p>
+            </div>
+
+            <div class="card">
+              <h2 class="card-title" data-i18n="focus.today">Heute</h2>
+              <div class="goal-block">
+                <div class="goal-head">
+                  <span id="dailyTimeLabel"></span>
+                  <span class="goal-value" id="dailyTimeValue">0 / 0</span>
+                </div>
+                <div class="bar"><div class="bar-fill" id="dailyTimeBar"></div></div>
+              </div>
+              <div class="goal-block">
+                <div class="goal-head">
+                  <span data-i18n="focus.tasks">Aufgaben</span>
+                  <span class="goal-value" id="dailyTaskValue">0 / 0</span>
+                </div>
+                <div class="bar"><div class="bar-fill" id="dailyTaskBar"></div></div>
+              </div>
+              <div class="streak" id="streakBox"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------- AUFGABEN -->
+      <section class="view" data-view="tasks">
+        <div class="card">
+          <h2 class="card-title" data-i18n="tasks.newTask">Neue Aufgabe</h2>
+          <form class="task-form" id="taskForm">
+            <input type="text" id="newTitle" data-i18n-placeholder="tasks.titlePlaceholder" required maxlength="160" />
+            <input type="text" id="newCategory" list="categoryList" data-i18n-placeholder="tasks.categoryPlaceholder" maxlength="60" />
+            <datalist id="categoryList"></datalist>
+            <input type="number" id="newEstimate" min="1" max="600" value="25" data-i18n-title="tasks.estimateTitle" />
+            <span class="unit" data-i18n="tasks.unitMin">min</span>
+            <select id="newPriority" data-i18n-title="tasks.priorityTitle">
+              <option value="none" data-i18n="tasks.prio.none">normal</option>
+              <option value="important" data-i18n="tasks.prio.important">wichtig</option>
+              <option value="urgent" data-i18n="tasks.prio.urgent">dringend</option>
+              <option value="both" data-i18n="tasks.prio.both">wichtig + dringend</option>
+            </select>
+            <button class="btn btn-primary" type="submit" data-i18n="tasks.add">Hinzufügen</button>
+            <textarea id="newNote" data-i18n-placeholder="tasks.notePlaceholder" rows="2"></textarea>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="tasks-head">
+            <h2 class="card-title" data-i18n="tasks.list">Aufgabenliste</h2>
+            <div class="filters">
+              <select id="filterCategory"></select>
+              <select id="filterStatus">
+                <option value="open" data-i18n="tasks.filterOpen">Offen</option>
+                <option value="all" data-i18n="tasks.filterAll">Alle</option>
+                <option value="done" data-i18n="tasks.filterDone">Erledigt</option>
+              </select>
+              <button class="btn btn-small btn-ghost" id="btnClearDone" data-i18n="tasks.clearDone">Erledigte entfernen</button>
+            </div>
+          </div>
+
+          <div class="progress-line">
+            <span id="taskProgressText"></span>
+            <div class="bar"><div class="bar-fill" id="taskProgressBar"></div></div>
+          </div>
+
+          <div id="taskList" class="task-list"></div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------- ZIELE -->
+      <section class="view" data-view="goals">
+        <div class="card">
+          <h2 class="card-title" data-i18n="goals.daily">Tagesziel</h2>
+          <div class="goal-config">
+            <label><span data-i18n="goals.mode">Modus</span>
+              <select id="dailyMode">
+                <option value="time" data-i18n="goals.modeTime">Lernzeit</option>
+                <option value="tasks" data-i18n="goals.modeTasks">Aufgaben</option>
+                <option value="both" data-i18n="goals.modeBoth">Lernzeit + Aufgaben</option>
+              </select>
+            </label>
+            <label><span data-i18n="goals.minutes">Minuten</span><input type="number" id="dailyTimeTarget" min="5" max="1440" step="5" value="180" /></label>
+            <label><span data-i18n="goals.tasks">Aufgaben</span><input type="number" id="dailyTaskTarget" min="1" max="50" value="5" /></label>
+          </div>
+          <div class="goal-block">
+            <div class="goal-head"><span data-i18n="goals.timeToday">Lernzeit heute</span><span class="goal-value" id="gDailyTimeValue">0 / 0</span></div>
+            <div class="bar"><div class="bar-fill" id="gDailyTimeBar"></div></div>
+          </div>
+          <div class="goal-block">
+            <div class="goal-head"><span data-i18n="goals.tasksToday">Aufgaben heute</span><span class="goal-value" id="gDailyTaskValue">0 / 0</span></div>
+            <div class="bar"><div class="bar-fill" id="gDailyTaskBar"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title" data-i18n="goals.weekly">Wochenziel</h2>
+          <div class="goal-config">
+            <label><span data-i18n="goals.mode">Modus</span>
+              <select id="weeklyMode">
+                <option value="time" data-i18n="goals.modeTime">Lernzeit</option>
+                <option value="tasks" data-i18n="goals.modeTasks">Aufgaben</option>
+                <option value="both" data-i18n="goals.modeBoth">Lernzeit + Aufgaben</option>
+              </select>
+            </label>
+            <label><span data-i18n="goals.minutes">Minuten</span><input type="number" id="weeklyTimeTarget" min="10" max="10080" step="10" value="900" /></label>
+            <label><span data-i18n="goals.tasks">Aufgaben</span><input type="number" id="weeklyTaskTarget" min="1" max="300" value="25" /></label>
+          </div>
+          <div class="goal-block">
+            <div class="goal-head"><span data-i18n="goals.timeWeek">Lernzeit diese Woche</span><span class="goal-value" id="gWeekTimeValue">0 / 0</span></div>
+            <div class="bar"><div class="bar-fill" id="gWeekTimeBar"></div></div>
+          </div>
+          <div class="goal-block">
+            <div class="goal-head"><span data-i18n="goals.tasksWeek">Aufgaben diese Woche</span><span class="goal-value" id="gWeekTaskValue">0 / 0</span></div>
+            <div class="bar"><div class="bar-fill" id="gWeekTaskBar"></div></div>
+          </div>
+        </div>
+
+        <div class="card streak-card">
+          <h2 class="card-title" data-i18n="goals.streak">Streak</h2>
+          <div class="streak-big" id="streakBig">0</div>
+          <p class="hint" id="streakHint"></p>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------- STATISTIK -->
+      <section class="view" data-view="stats">
+        <div class="stat-cards">
+          <div class="card stat"><div class="stat-value" id="statToday">0 min</div><div class="stat-label" data-i18n="stats.today">Heute</div></div>
+          <div class="card stat"><div class="stat-value" id="statWeek">0 min</div><div class="stat-label" data-i18n="stats.week">Diese Woche</div></div>
+          <div class="card stat"><div class="stat-value" id="statTotal">0 h</div><div class="stat-label" data-i18n="stats.total">Gesamt</div></div>
+          <div class="card stat"><div class="stat-value" id="statSessions">0</div><div class="stat-label" data-i18n="stats.sessions">Sessions</div></div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title" data-i18n="stats.last14">Letzte 14 Tage</h2>
+          <div class="barchart" id="barChart"></div>
+        </div>
+
+        <div class="card">
+          <div class="tasks-head">
+            <h2 class="card-title" data-i18n="stats.heatmap">Lern-Heatmap</h2>
+            <div class="heat-legend">
+              <span data-i18n="stats.less">weniger</span>
+              <i class="heat l0"></i><i class="heat l1"></i><i class="heat l2"></i><i class="heat l3"></i><i class="heat l4"></i>
+              <span data-i18n="stats.more">mehr</span>
+            </div>
+          </div>
+          <div class="heatmap-scroll"><div class="heatmap" id="heatmap"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="tasks-head">
+            <h2 class="card-title" data-i18n="stats.history">Verlauf</h2>
+            <div class="filters">
+              <button class="btn btn-small" id="btnExportCsv" data-i18n="stats.exportCsv">CSV exportieren</button>
+            </div>
+          </div>
+          <div class="session-list" id="sessionList"></div>
+        </div>
+      </section>
+
+      <!-- ---------------------------------------------------- EINSTELLUNGEN -->
+      <section class="view" data-view="settings">
+        <div class="card">
+          <h2 class="card-title" data-i18n="settings.appearance">Darstellung</h2>
+          <label class="setting-row">
+            <span data-i18n="settings.theme">Design</span>
+            <select id="themeSelect">
+              <option value="dark" data-i18n="settings.themeDark">Dunkel</option>
+              <option value="light" data-i18n="settings.themeLight">Hell</option>
+              <option value="system" data-i18n="settings.themeSystem">Systemeinstellung</option>
+            </select>
+          </label>
+          <label class="setting-row">
+            <span data-i18n="settings.language">Sprache</span>
+            <select id="languageSelect">
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+              <option value="system" data-i18n="settings.languageSystem">Systemsprache</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title" data-i18n="settings.timer">Timer</h2>
+          <label class="setting-row">
+            <span data-i18n="settings.presets">Presets (Minuten, kommagetrennt)</span>
+            <input type="text" id="presetInput" placeholder="25, 45, 60" />
+          </label>
+          <label class="setting-row">
+            <span data-i18n="settings.sound">Signalton bei Ablauf</span>
+            <label class="switch"><input type="checkbox" id="soundToggle" checked /><span class="slider"></span></label>
+          </label>
+          <label class="setting-row">
+            <span data-i18n="settings.notify">System-Benachrichtigung</span>
+            <label class="switch"><input type="checkbox" id="notifyToggle" checked /><span class="slider"></span></label>
+          </label>
+          <label class="setting-row">
+            <span data-i18n="settings.reflection">Reflexion nach jeder Session abfragen</span>
+            <label class="switch"><input type="checkbox" id="reflectionToggle" checked /><span class="slider"></span></label>
+          </label>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title" data-i18n="settings.vault">Obsidian-Vault</h2>
+          <div class="vault-row">
+            <input type="text" id="vaultPath" data-i18n-placeholder="settings.vaultPlaceholder" readonly />
+            <button class="btn" id="btnPickVault" data-i18n="settings.pickFolder">Ordner wählen</button>
+            <button class="btn btn-ghost" id="btnClearVault" data-i18n="settings.removeVault">Entfernen</button>
+          </div>
+          <div id="vaultStatus" class="vault-status"></div>
+
+          <label class="setting-row">
+            <span data-i18n="settings.tasksFolder">Ordner für Aufgaben</span>
+            <input type="text" id="vaultTasksFolder" value="Lernaufgaben" />
+          </label>
+          <label class="setting-row">
+            <span data-i18n="settings.dailyFolder">Ordner für Tagesnotizen</span>
+            <input type="text" id="vaultDailyFolder" value="Tagesnotizen" />
+          </label>
+          <label class="setting-row">
+            <span data-i18n="settings.syncTasks">Aufgaben als Markdown synchronisieren</span>
+            <label class="switch"><input type="checkbox" id="vaultSyncTasks" /><span class="slider"></span></label>
+          </label>
+          <label class="setting-row">
+            <span data-i18n="settings.writeDaily">Sessions in Tagesnotiz schreiben</span>
+            <label class="switch"><input type="checkbox" id="vaultWriteDaily" /><span class="slider"></span></label>
+          </label>
+          <div class="row-actions">
+            <button class="btn btn-small" id="btnVaultSync" data-i18n="settings.syncNow">Jetzt mit Vault abgleichen</button>
+            <button class="btn btn-small btn-ghost" id="btnVaultPushAll" data-i18n="settings.pushAll">Alle Aufgaben in Vault schreiben</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title" data-i18n="settings.data">Daten</h2>
+          <p class="hint" data-i18n="settings.dataHint">Alle Aufgaben, Ziele und Statistiken liegen lokal in:</p>
+          <code class="path" id="dataPath">—</code>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <!-- ------------------------------------------------------ REFLEXION -->
+    <div class="modal-backdrop" id="reflectionModal" hidden>
+      <div class="modal">
+        <h2 data-i18n="reflection.title">Session abgeschlossen</h2>
+        <p class="modal-sub" id="reflectionSummary"></p>
+
+        <label class="field">
+          <span data-i18n="reflection.question">Was hast du gelernt?</span>
+          <textarea id="reflectionText" rows="4" data-i18n-placeholder="reflection.placeholder"></textarea>
+        </label>
+
+        <div class="field">
+          <span data-i18n="reflection.focusQuestion">Wie fokussiert warst du?</span>
+          <div class="focus-scale" id="focusScale">
+            <button type="button" data-focus="1">1</button>
+            <button type="button" data-focus="2">2</button>
+            <button type="button" data-focus="3">3</button>
+            <button type="button" data-focus="4">4</button>
+            <button type="button" data-focus="5">5</button>
+          </div>
+        </div>
+
+        <label class="check-row" id="reflectionTaskRow" hidden>
+          <input type="checkbox" id="reflectionTaskDone" />
+          <span data-i18n="reflection.markDone">Aufgabe als erledigt markieren</span>
+        </label>
+
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="reflectionSkip" data-i18n="reflection.skip">Überspringen</button>
+          <button class="btn btn-primary" id="reflectionSave" data-i18n="reflection.save">Speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- --------------------------------------------------- AUFGABE EDIT -->
+    <div class="modal-backdrop" id="editModal" hidden>
+      <div class="modal">
+        <h2 data-i18n="tasks.editTitle">Aufgabe bearbeiten</h2>
+        <label class="field"><span data-i18n="tasks.fieldTitle">Titel</span><input type="text" id="editTitle" maxlength="160" /></label>
+        <div class="field-row">
+          <label class="field"><span data-i18n="tasks.fieldCategory">Fach</span><input type="text" id="editCategory" list="categoryList" maxlength="60" /></label>
+          <label class="field"><span data-i18n="tasks.fieldMinutes">Minuten</span><input type="number" id="editEstimate" min="1" max="600" /></label>
+          <label class="field"><span data-i18n="tasks.fieldPriority">Priorität</span>
+            <select id="editPriority">
+              <option value="none" data-i18n="tasks.prio.none">normal</option>
+              <option value="important" data-i18n="tasks.prio.important">wichtig</option>
+              <option value="urgent" data-i18n="tasks.prio.urgent">dringend</option>
+              <option value="both" data-i18n="tasks.prio.both">wichtig + dringend</option>
+            </select>
+          </label>
+        </div>
+        <label class="field"><span data-i18n="tasks.fieldNote">Notiz</span><textarea id="editNote" rows="4"></textarea></label>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="editCancel" data-i18n="common.cancel">Abbrechen</button>
+          <button class="btn btn-primary" id="editSave" data-i18n="common.save">Speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
